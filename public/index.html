@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Avery Notion Sync</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Poppins", sans-serif;
+        padding: 24px;
+        max-width: 800px;
+        margin: 0 auto;
+        background: #f8f9fa;
+      }
+
+      h1 {
+        color: #333;
+        margin-bottom: 24px;
+      }
+
+      .card {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+
+      .card h3 {
+        margin: 0 0 16px 0;
+        color: #444;
+        font-size: 18px;
+      }
+
+      input,
+      button,
+      select {
+        font-family: "Poppins", sans-serif;
+        font-size: 14px;
+      }
+
+      input[type="text"],
+      input[type="email"],
+      input[type="date"] {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-bottom: 8px;
+      }
+
+      button {
+        background: #5865f2;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: background 0.2s;
+      }
+
+      button:hover {
+        background: #4752c4;
+      }
+
+      button:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
+
+      button.secondary {
+        background: #6c757d;
+      }
+
+      button.secondary:hover {
+        background: #5a6268;
+      }
+
+      button.danger {
+        background: #dc3545;
+      }
+
+      button.danger:hover {
+        background: #c82333;
+      }
+
+      .status {
+        font-size: 13px;
+        color: #666;
+        margin-top: 8px;
+      }
+
+      .status.success {
+        color: #28a745;
+      }
+
+      .status.error {
+        color: #dc3545;
+      }
+
+      .label {
+        font-size: 13px;
+        color: #666;
+        margin-bottom: 4px;
+      }
+
+      .page-item {
+        padding: 8px;
+        border: 1px solid #e0e0e0;
+        border-radius: 4px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .page-item:hover {
+        background: #f0f0f0;
+      }
+
+      .page-item.selected {
+        background: #e3f2fd;
+        border-color: #5865f2;
+      }
+
+      .flex {
+        display: flex;
+        gap: 12px;
+        align-items: flex-end;
+      }
+
+      .flex-col {
+        flex: 1;
+      }
+
+      #search-results {
+        max-height: 300px;
+        overflow-y: auto;
+        margin-top: 12px;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .spinner {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #5865f2;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-right: 8px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 500;
+        background: #e3f2fd;
+        color: #1976d2;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🔄 Avery Notion Sync</h1>
+
+    <!-- Login Section -->
+    <div class="card" id="login-card">
+      <h3>👋 Welcome to Avery Notion Sync</h3>
+      <div class="label">Enter your Avery email to get started:</div>
+      <input type="email" id="login-email" placeholder="you@example.com" />
+      <button onclick="loginWithEmail()">Login</button>
+      <div class="status" id="login-status"></div>
+
+      <div
+        style="
+          margin-top: 16px;
+          padding: 12px;
+          background: #f0f0f0;
+          border-radius: 4px;
+          font-size: 13px;
+        "
+      >
+        <strong>ℹ️ Note:</strong> No password needed! Just enter your email to
+        get started.
+      </div>
+    </div>
+
+    <!-- Logged In Section -->
+    <div class="card hidden" id="logged-in-card">
+      <h3>✅ Logged In</h3>
+      <p style="margin: 0">
+        Logged in as: <strong id="logged-in-email"></strong>
+      </p>
+    </div>
+
+    <!-- Step 1: Connect Notion -->
+    <div class="card">
+      <h3>1️⃣ Connect Notion</h3>
+      <button onclick="connectNotion()">Connect Notion Account</button>
+      <div class="status" id="notion-status"></div>
+    </div>
+
+    <!-- Step 2: Choose Parent Page -->
+    <div class="card hidden" id="choose-parent-card">
+      <h3>2️⃣ Choose Parent Page</h3>
+      <div class="label">Search for a page in your Notion workspace:</div>
+      <div class="flex">
+        <input
+          type="text"
+          id="page-search"
+          placeholder="Search pages..."
+          style="flex: 1"
+        />
+        <button onclick="searchPages()">Search</button>
+      </div>
+      <div id="search-results"></div>
+      <div class="status" id="search-status"></div>
+    </div>
+
+    <!-- Step 3: Create Database -->
+    <div class="card hidden" id="create-db-card">
+      <h3>3️⃣ Create Transactions Database</h3>
+      <p style="font-size: 14px; color: #666; margin-bottom: 16px">
+        Selected page: <strong id="selected-page-name">-</strong>
+      </p>
+      <button onclick="createDatabase()">
+        Create "Avery Transactions" Database
+      </button>
+      <div class="status" id="db-status"></div>
+    </div>
+
+    <!-- Step 4: Sync Transactions -->
+    <div class="card hidden" id="sync-card">
+      <h3>4️⃣ Sync Transactions</h3>
+      <div class="label">Your Avery account email:</div>
+      <input type="email" id="sync-email" placeholder="you@example.com" />
+
+      <div class="flex" style="margin-top: 12px">
+        <div class="flex-col">
+          <div class="label">From Date:</div>
+          <input type="date" id="from-date" />
+        </div>
+        <div class="flex-col">
+          <div class="label">To Date:</div>
+          <input type="date" id="to-date" />
+        </div>
+      </div>
+
+      <button onclick="runSync()" style="margin-top: 12px">Run Sync</button>
+      <div class="status" id="sync-status"></div>
+    </div>
+
+    <!-- Step 5: AI Auto-Categorization -->
+    <div class="card">
+      <h3>5️⃣ AI Auto-Categorization</h3>
+      <div class="label">Suggest categories for transactions using AI:</div>
+
+      <div class="flex" style="margin-top: 12px">
+        <div class="flex-col">
+          <div class="label">Email:</div>
+          <input type="email" id="ai-email" placeholder="you@example.com" />
+        </div>
+        <div class="flex-col">
+          <div class="label">From Date:</div>
+          <input type="date" id="ai-from-date" />
+        </div>
+        <div class="flex-col">
+          <div class="label">To Date:</div>
+          <input type="date" id="ai-to-date" />
+        </div>
+      </div>
+
+      <div style="margin-top: 12px; display: flex; gap: 8px">
+        <button onclick="aiSuggestCategories()">Suggest Categories</button>
+        <button
+          id="ai-apply-btn"
+          onclick="aiApplyRules()"
+          class="secondary"
+          disabled
+        >
+          Apply As Rules
+        </button>
+      </div>
+
+      <div class="status" id="ai-status"></div>
+      <pre
+        id="ai-output"
+        class="hidden"
+        style="
+          white-space: pre-wrap;
+          font-size: 12px;
+          background: #fafafa;
+          padding: 12px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          margin-top: 12px;
+          max-height: 300px;
+          overflow-y: auto;
+        "
+      ></pre>
+    </div>
+
+    <!-- Additional Features -->
+    <div class="card">
+      <h3>🔧 Additional Features</h3>
+
+      <div style="margin-bottom: 16px">
+        <strong>View Accounts</strong>
+        <div class="flex" style="margin-top: 8px">
+          <input
+            type="email"
+            id="accounts-email"
+            placeholder="you@example.com"
+            style="flex: 1"
+          />
+          <button onclick="listAccounts()">List Accounts</button>
+        </div>
+        <div class="status" id="accounts-status"></div>
+      </div>
+
+      <div style="margin-bottom: 16px">
+        <strong>Category Rules</strong>
+        <div class="flex" style="margin-top: 8px">
+          <input
+            type="text"
+            id="rule-match"
+            placeholder="Match text (e.g., 'amazon')"
+            style="flex: 1"
+          />
+          <input
+            type="text"
+            id="rule-category"
+            placeholder="Category"
+            style="flex: 1"
+          />
+          <button onclick="addCategoryRule()">Add Rule</button>
+        </div>
+        <button
+          onclick="listCategoryRules()"
+          class="secondary"
+          style="margin-top: 8px"
+        >
+          View Rules
+        </button>
+        <button
+          onclick="resetCategoryRules()"
+          class="danger"
+          style="margin-top: 8px"
+        >
+          Reset Rules
+        </button>
+        <div class="status" id="rules-status"></div>
+      </div>
+
+      <div style="margin-bottom: 16px">
+        <strong>Check Reconsent Status</strong>
+        <div class="flex" style="margin-top: 8px">
+          <input
+            type="email"
+            id="reconsent-email"
+            placeholder="you@example.com"
+            style="flex: 1"
+          />
+          <button onclick="checkReconsent()">Check Status</button>
+        </div>
+        <button
+          id="open-reconsent-btn"
+          onclick="openReconsent()"
+          class="secondary"
+          style="margin-top: 8px"
+          disabled
+        >
+          Open Reconsent Page
+        </button>
+        <div class="status" id="reconsent-status"></div>
+      </div>
+
+      <div>
+        <strong>Open Bank Connect</strong><br />
+        <button
+          onclick="openBankConnect()"
+          class="secondary"
+          style="margin-top: 8px"
+        >
+          Connect Bank Account
+        </button>
+      </div>
+    </div>
+
+    <!-- Tutorials & Resources -->
+    <div class="card" id="tutorials">
+      <h3>📚 Tutorials & Resources</h3>
+
+      <div style="margin-bottom: 16px">
+        <strong>Video Tutorials:</strong>
+        <ul style="margin-top: 8px; padding-left: 20px">
+          <li>
+            <a
+              href="https://youtu.be/qn15CKkhYyc"
+              target="_blank"
+              rel="noopener"
+            >
+              Connect Your Bank Account
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://youtu.be/oxtaivMH0TA"
+              target="_blank"
+              rel="noopener"
+            >
+              Importing Transactions
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://youtu.be/rUS_-vzV7R0"
+              target="_blank"
+              rel="noopener"
+            >
+              Auto Updates
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://youtu.be/p0TJQm6rTBA"
+              target="_blank"
+              rel="noopener"
+            >
+              AI Auto-Categorise
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div>
+        <strong>Notion Templates:</strong>
+        <ul style="margin-top: 8px; padding-left: 20px">
+          <li>
+            <a
+              href="https://docs.google.com/spreadsheets/d/11s4OMkbh6VstrSL1BshecHmLdPytKviazp3MwXzQZiY/copy"
+              target="_blank"
+              rel="noopener"
+            >
+              Avery Bookkeeping Template
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://docs.google.com/spreadsheets/d/1DqwQWVQymmdVx_2Pikzg7J3ulbiF9ibfdQKkWwPqHjg/copy"
+              target="_blank"
+              rel="noopener"
+            >
+              Foundation Template
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div style="margin-top: 16px">
+        <strong>Deployment Guides:</strong>
+        <ul style="margin-top: 8px; padding-left: 20px">
+          <li>
+            <strong>PM2 (Local):</strong> <code>pm2 start server.js</code> -
+            Keep server running 24/7
+          </li>
+          <li><strong>Heroku:</strong> Free tier cloud hosting</li>
+          <li><strong>Railway:</strong> Modern, easy deployment</li>
+          <li><strong>Render:</strong> Free tier available</li>
+        </ul>
+        <p style="margin-top: 8px; font-size: 13px; color: #666">
+          See <code>LAUNCH.md</code> in the project folder for detailed
+          instructions.
+        </p>
+      </div>
+    </div>
+
+    <!-- Reset Options -->
+    <div class="card">
+      <h3>⚠️ Reset & Clear Data</h3>
+
+      <div style="margin-bottom: 12px">
+        <button onclick="resetCategoryRules()" class="danger">
+          Clear Rules
+        </button>
+      </div>
+
+      <p style="font-size: 13px; color: #666; margin-bottom: 12px">
+        Or reset everything at once:
+      </p>
+      <button onclick="resetConfig()" class="danger">Reset Everything</button>
+      <div class="status" id="reset-status"></div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
